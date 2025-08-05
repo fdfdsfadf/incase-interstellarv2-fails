@@ -177,7 +177,7 @@ document.addEventListener("DOMContentLoaded", event => {
 const SplashT = [
   "Fastest growing proxy server",
   "Made by macbooksuck dev team",
-  "Check out macbooksuck.xyz discord.gg/jJ5E8ZzQGB :)",
+  "Check out macbooksuck.xyz discord.gg/bUhB26NxNC :)",
   "Thanks for using the site",
   "Check out the settings page",
 ];
