@@ -37,6 +37,23 @@ if (config.challenge !== false) {
   app.use(basicAuth({ users: config.users, challenge: true }));
 }
 
+const bannedIPs = [
+  "203.0.113.42", // Example school IP
+  "122.150.162.80" // Another banned IP
+];
+
+app.use((req, res, next) => {
+  const ip = req.headers["x-forwarded-for"] || req.socket.remoteAddress;
+
+  if (bannedIPs.includes(ip)) {
+    console.log(`🚫 Blocked IP: ${ip}`);
+    return res.status(403).send("Access denied.");
+  }
+
+  next();
+});
+
+
 app.get("/e/*", async (req, res, next) => {
   try {
     if (cache.has(req.path)) {
