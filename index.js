@@ -11,6 +11,7 @@ import mime from "mime";
 import fetch from "node-fetch";
 // import { setupMasqr } from "./Masqr.js";
 import config from "./config.js";
+const __dirname = path.dirname(new URL(import.meta.url).pathname);
 
 console.log(chalk.yellow("🚀 Starting server..."));
 
@@ -21,7 +22,6 @@ fs.watchFile(path.join(__dirname, 'blocklist.json'), () => {
   blockedSites = JSON.parse(fs.readFileSync(path.join(__dirname, 'blocklist.json')));
 });
 
-const __dirname = process.cwd();
 const server = http.createServer();
 const app = express();
 const bareServer = createBareServer("/ca/");
