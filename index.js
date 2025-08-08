@@ -9,8 +9,8 @@ import express from "express";
 import basicAuth from "express-basic-auth";
 import mime from "mime";
 import fetch from "node-fetch";
-// import { setupMasqr } from "./Masqr.js";
 import config from "./config.js";
+
 const __dirname = path.dirname(new URL(import.meta.url).pathname);
 
 console.log(chalk.yellow("🚀 Starting server..."));
@@ -29,31 +29,53 @@ const PORT = process.env.PORT || 8080;
 const cache = new Map();
 const CACHE_TTL = 30 * 24 * 60 * 60 * 1000; // Cache for 30 Days
 
+// 👥 Track active sessions (user -> IP)
+const activeSessions = new Map();
+
+// 🔐 Basic Auth
 if (config.challenge !== false) {
   console.log(chalk.green("🔒 Password protection is enabled! Listing logins below"));
   Object.entries(config.users).forEach(([username, password]) => {
     console.log(chalk.blue(`Username: ${username}, Password: ${password}`));
   });
+
   app.use(basicAuth({ users: config.users, challenge: true }));
+
+  // 🚫 Single Session Check
+  app.use((req, res, next) => {
+    const user = req.auth?.user;
+    const ip = (req.headers["x-forwarded-for"] || req.socket.remoteAddress || "").split(",")[0].trim();
+
+    if (user) {
+      const currentIP = activeSessions.get(user);
+      if (currentIP && currentIP !== ip) {
+        console.log(`🚫 ${user} already logged in from ${currentIP}, blocked ${ip}`);
+        return res.status(403).send("Access denied: Account already in use.");
+      }
+
+      activeSessions.set(user, ip);
+    }
+
+    next();
+  });
 }
 
+// 🚫 Banned IPs
 const bannedIPs = [
-  "203.0.113.42", // Example school IP
-  "122.150.162.80" // Another banned IP
+  "203.0.113.42",
+  "122.150.162.80"
 ];
 
 app.use((req, res, next) => {
   const ip = req.headers["x-forwarded-for"] || req.socket.remoteAddress;
-
   if (bannedIPs.includes(ip)) {
     console.log(`🚫 Blocked IP: ${ip}`);
     return res.status(403).send("Access denied.");
   }
-
   next();
 });
 
-
+// 🎮 Asset Proxy
 app.get("/e/*", async (req, res, next) => {
   try {
     if (cache.has(req.path)) {
@@ -102,9 +124,12 @@ app.get("/e/*", async (req, res, next) => {
   }
 });
 
+// 🧱 Middleware
 app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// 🚫 Blocklist Check
 app.use((req, res, next) => {
   const target = req.query.url || req.body?.url || req.originalUrl;
   if (target) {
@@ -117,6 +142,7 @@ app.use((req, res, next) => {
   next();
 });
 
+// 🧱 Static + Routes
 app.use(express.static(path.join(__dirname, "static")));
 app.use("/ca", cors({ origin: true }));
 
@@ -135,6 +161,7 @@ routes.forEach(route => {
   });
 });
 
+// 🧱 404 + Error
 app.use((req, res, next) => {
   res.status(404).sendFile(path.join(__dirname, "static", "404.html"));
 });
