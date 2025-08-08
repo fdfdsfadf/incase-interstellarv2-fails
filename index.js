@@ -30,10 +30,7 @@ const cache = new Map();
 const CACHE_TTL = 30 * 24 * 60 * 60 * 1000; // Cache for 30 Days
 
 if (config.challenge !== false) {
-  console.log(
-    chalk.green("🔒 Password protection is enabled! Listing logins below"),
-  );
-  // biome-ignore lint/complexity/noForEach:
+  console.log(chalk.green("🔒 Password protection is enabled! Listing logins below"));
   Object.entries(config.users).forEach(([username, password]) => {
     console.log(chalk.blue(`Username: ${username}, Password: ${password}`));
   });
@@ -66,14 +63,10 @@ app.get("/e/*", async (req, res, next) => {
       }
     }
 
-    if (!reqTarget) {
-      return next();
-    }
+    if (!reqTarget) return next();
 
     const asset = await fetch(reqTarget);
-    if (!asset.ok) {
-      return next();
-    }
+    if (!asset.ok) return next();
 
     const data = Buffer.from(await asset.arrayBuffer());
     const ext = path.extname(reqTarget);
@@ -107,11 +100,6 @@ app.use((req, res, next) => {
   next();
 });
 
-/* if (process.env.MASQR === "true") {
-  console.log(chalk.green("Masqr is enabled"));
-  setupMasqr(app);
-} */
-
 app.use(express.static(path.join(__dirname, "static")));
 app.use("/ca", cors({ origin: true }));
 
@@ -124,7 +112,6 @@ const routes = [
   { path: "/", file: "index.html" },
 ];
 
-// biome-ignore lint/complexity/noForEach:
 routes.forEach(route => {
   app.get(route.path, (_req, res) => {
     res.sendFile(path.join(__dirname, "static", route.file));
@@ -140,14 +127,19 @@ app.use((err, req, res, next) => {
   res.status(500).sendFile(path.join(__dirname, "static", "404.html"));
 });
 
+// 🔐 Enhanced blocklist logic
 server.on("request", (req, res) => {
-  const targetUrl = req.url?.toLowerCase();
+  const headers = req.headers;
+  const hostHeader = headers.host?.toLowerCase() || "";
+  const refererHeader = headers.referer?.toLowerCase() || "";
+  const fullTarget = `${req.url} ${hostHeader} ${refererHeader}`;
 
   if (
-    targetUrl &&
-    blockedSites.some(site => targetUrl.includes(site.replace(/\/$/, '').toLowerCase()))
+    blockedSites.some(site =>
+      fullTarget.includes(site.replace(/\/$/, '').toLowerCase())
+    )
   ) {
-    console.log(`🚫 Blocked attempt: ${targetUrl}`);
+    console.log(`🚫 Blocked attempt: ${fullTarget}`);
     res.writeHead(403, { "Content-Type": "text/plain" });
     return res.end("🚫 This site is blocked.");
   }
@@ -158,7 +150,6 @@ server.on("request", (req, res) => {
     app(req, res);
   }
 });
-
 
 server.on("upgrade", (req, socket, head) => {
   if (bareServer.shouldRoute(req)) {
