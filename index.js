@@ -141,12 +141,24 @@ app.use((err, req, res, next) => {
 });
 
 server.on("request", (req, res) => {
+  const targetUrl = req.url?.toLowerCase();
+
+  if (
+    targetUrl &&
+    blockedSites.some(site => targetUrl.includes(site.replace(/\/$/, '').toLowerCase()))
+  ) {
+    console.log(`🚫 Blocked attempt: ${targetUrl}`);
+    res.writeHead(403, { "Content-Type": "text/plain" });
+    return res.end("🚫 This site is blocked.");
+  }
+
   if (bareServer.shouldRoute(req)) {
     bareServer.routeRequest(req, res);
   } else {
     app(req, res);
   }
 });
+
 
 server.on("upgrade", (req, socket, head) => {
   if (bareServer.shouldRoute(req)) {
