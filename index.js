@@ -14,6 +14,13 @@ import config from "./config.js";
 
 console.log(chalk.yellow("🚀 Starting server..."));
 
+let blockedSites = JSON.parse(fs.readFileSync(path.join(__dirname, 'blocklist.json')));
+
+fs.watchFile(path.join(__dirname, 'blocklist.json'), () => {
+  console.log("🔄 Blocklist updated");
+  blockedSites = JSON.parse(fs.readFileSync(path.join(__dirname, 'blocklist.json')));
+});
+
 const __dirname = process.cwd();
 const server = http.createServer();
 const app = express();
@@ -88,6 +95,17 @@ app.get("/e/*", async (req, res, next) => {
 app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use((req, res, next) => {
+  const target = req.query.url || req.body?.url || req.originalUrl;
+  if (target) {
+    const normalizedTarget = target.toLowerCase();
+    if (blockedSites.some(site => normalizedTarget.includes(site.replace(/\/$/, '').toLowerCase()))) {
+      console.log(`🚫 Blocked attempt: ${normalizedTarget}`);
+      return res.status(403).send("🚫 This site is blocked.");
+    }
+  }
+  next();
+});
 
 /* if (process.env.MASQR === "true") {
   console.log(chalk.green("Masqr is enabled"));
