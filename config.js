@@ -6,7 +6,7 @@ const config = {
     Alerio: "Alerio123#",
     Judah: "BrokenHand",
     Eric: "appetite",
-    Antonio: "blackie-chan"
+    Antonio: "blackie-chan",
   },
 };
 
