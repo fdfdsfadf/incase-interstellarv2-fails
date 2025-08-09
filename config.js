@@ -2,9 +2,11 @@ const config = {
   challenge: true, // Set to true if you want to enable password protection.
   users: {
     // You can add multiple users by doing username: 'password'.
-    Hugo: "yaydiscord",
+    Hugo: "Book4264",
     Alerio: "Alerio123#",
     Judah: "BrokenHand",
+    Eric: "appetite",
+    Antonio: "blackie-chan"
   },
 };
 
