@@ -7,6 +7,7 @@ const config = {
     Judah: "BrokenHand",
     Eric: "appetite",
     Antonio: "blackie-chan",
+    C++NM: "bleachammoniamixgood"
   },
 };
 
