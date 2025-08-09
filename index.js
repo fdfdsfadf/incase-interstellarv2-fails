@@ -9,6 +9,7 @@ import express from "express";
 import basicAuth from "express-basic-auth";
 import mime from "mime";
 import fetch from "node-fetch";
+import crypto from "node:crypto";
 import config from "./config.js";
 
 const __dirname = path.dirname(new URL(import.meta.url).pathname);
@@ -29,8 +30,13 @@ const PORT = process.env.PORT || 8080;
 const cache = new Map();
 const CACHE_TTL = 30 * 24 * 60 * 60 * 1000; // Cache for 30 Days
 
-// 👥 Track active sessions (user -> IP)
+// 👥 Track active sessions (user -> session ID)
 const activeSessions = new Map();
+
+// 🧱 Middleware
+app.use(cookieParser());
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 // 🔐 Basic Auth
 if (config.challenge !== false) {
@@ -41,21 +47,32 @@ if (config.challenge !== false) {
 
   app.use(basicAuth({ users: config.users, challenge: true }));
 
-  // 🚫 Single Session Check
+  // 🧠 Session Lock Middleware
   app.use((req, res, next) => {
     const user = req.auth?.user;
-    const ip = (req.headers["x-forwarded-for"] || req.socket.remoteAddress || "").split(",")[0].trim();
+    const sessionId = req.cookies.sessionId || crypto.randomUUID();
 
-    if (user) {
-      const currentIP = activeSessions.get(user);
-      if (currentIP && currentIP !== ip) {
-        console.log(`🚫 ${user} already logged in from ${currentIP}, blocked ${ip}`);
-        return res.status(403).send("Access denied: Account already in use.");
-      }
-
-      activeSessions.set(user, ip);
+    if (!req.cookies.sessionId) {
+      res.cookie("sessionId", sessionId, { httpOnly: true });
     }
 
+    const currentSession = activeSessions.get(user);
+
+    if (currentSession && currentSession !== sessionId) {
+      console.log(`🚫 ${user} already logged in with session ${currentSession}, blocked ${sessionId}`);
+      res.clearCookie("sessionId");
+      return res.status(403).send(`
+        <html>
+          <body style="font-family:sans-serif;text-align:center;padding-top:50px;">
+            <h1>🚫 Access Denied</h1>
+            <p>This account is already in use.</p>
+            <a href="/">🔁 Try another login</a>
+          </body>
+        </html>
+      `);
+    }
+
+    activeSessions.set(user, sessionId);
     next();
   });
 }
@@ -123,11 +140,6 @@ app.get("/e/*", async (req, res, next) => {
     res.status(500).send("Error fetching the asset");
   }
 });
-
-// 🧱 Middleware
-app.use(cookieParser());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
 
 // 🚫 Blocklist Check
 app.use((req, res, next) => {
