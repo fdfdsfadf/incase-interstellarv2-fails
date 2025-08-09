@@ -63,7 +63,7 @@ if (config.challenge !== false) {
 // 🚫 Banned IPs
 const bannedIPs = [
   "203.0.113.42",
-  "122.150.162.80"
+  "124.150.162.86"
 ];
 
 app.use((req, res, next) => {
