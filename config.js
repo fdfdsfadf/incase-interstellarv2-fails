@@ -6,8 +6,9 @@ const config = {
     Alerio: "Alerio123#",
     Judah: "BrokenHand",
     Eric: "appetite",
-    Antonio: "blackie-chan",
-    "C++NM": "bleachammoniamixgood"
+    Dewish: "beta69",
+    "C++NM": "bleachammoniamixgood",
+    Emmanuel: "tiktok",
   },
 };
 
