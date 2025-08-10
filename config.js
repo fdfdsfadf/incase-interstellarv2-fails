@@ -9,6 +9,7 @@ const config = {
     Dewish: "beta69",
     "C++NM": "bleachammoniamixgood",
     Emmanuel: "tiktok",
+    "X.X": "12456789",
   },
 };
 
