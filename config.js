@@ -5,11 +5,11 @@ const config = {
     Hugo: "Book4264",
     Alerio: "Alerio123#",
     Judah: "BrokenHand",
-    Eric: "appetite",
+    Eric: "bigappetite",
     Dewish: "beta69",
     "C++NM": "bleachammoniamixgood",
     Emmanuel: "tiktok",
-    "X.X": "12456789",
+    "X.X": "1256789",
     Antonio: "blackie-chan"
   },
 };
