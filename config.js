@@ -10,7 +10,8 @@ const config = {
     "C++NM": "bleachammoniamixgood",
     Emmanuel: "tiktok",
     "X.X": "1256789",
-    Antonio: "blackie-chan"
+    Antonio: "blackie-chan",
+    Alexander: "lymer"
   },
 };
 
