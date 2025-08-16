@@ -14,7 +14,8 @@ const config = {
     Alexander: "lymer",
     "xzyzx._.0fficial": "coolkids89poo$",
     nks01: "NickSS14",
-    soldo: "salmon_on_toast"
+    soldo: "salmon_on_toast",
+    themadyappers: "timmyfromsouthpark69"
     
   },
 };
