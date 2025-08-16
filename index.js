@@ -236,4 +236,7 @@ server.on("upgrade", (req, socket, head) => {
 });
 
 server.on("listening", () => {
-  console.log(chalk.green
+  console.log(chalk.green(`🌍 Server is running on http://localhost:${PORT}`));
+});
+
+server.listen(PORT);
