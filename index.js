@@ -74,8 +74,11 @@ if (config.challenge !== false) {
       `);
     }
 
+    if (!currentSession) {
+      console.log(`[${timestamp}] ✅ User "${user}" logged in from IP ${ip} — session ${sessionId}`);
+    }
+
     activeSessions.set(user, sessionId);
-    console.log(`[${timestamp}] ✅ User "${user}" logged in from IP ${ip} — session ${sessionId}`);
     next();
   });
 
