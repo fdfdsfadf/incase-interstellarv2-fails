@@ -38,7 +38,7 @@ app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// 🔐 Basic Auth
+// 🔐 Basic Auth + Session Lock + Live Viewer
 if (config.challenge !== false) {
   console.log(chalk.green("🔒 Password protection is enabled! Listing logins below"));
   Object.entries(config.users).forEach(([username, password]) => {
@@ -47,10 +47,11 @@ if (config.challenge !== false) {
 
   app.use(basicAuth({ users: config.users, challenge: true }));
 
-  // 🧠 Session Lock Middleware
   app.use((req, res, next) => {
     const user = req.auth?.user;
     const sessionId = req.cookies.sessionId || crypto.randomUUID();
+    const ip = req.headers["x-forwarded-for"] || req.socket.remoteAddress;
+    const timestamp = new Date().toISOString();
 
     if (!req.cookies.sessionId) {
       res.cookie("sessionId", sessionId, { httpOnly: true });
@@ -59,13 +60,14 @@ if (config.challenge !== false) {
     const currentSession = activeSessions.get(user);
 
     if (currentSession && currentSession !== sessionId) {
-      console.log(`🚫 ${user} already logged in with session ${currentSession}, blocked ${sessionId}`);
+      console.log(`[${timestamp}] 🚫 Denied login for user "${user}" from IP ${ip} — already active in session ${currentSession}`);
       res.clearCookie("sessionId");
       return res.status(403).send(`
         <html>
           <body style="font-family:sans-serif;text-align:center;padding-top:50px;">
             <h1>🚫 Access Denied</h1>
-            <p>This account is already in use.</p>
+            <p>User <strong>${user}</strong> is already logged in.</p>
+            <p>Your IP: <strong>${ip}</strong></p>
             <a href="/">🔁 Try another login</a>
           </body>
         </html>
@@ -73,7 +75,23 @@ if (config.challenge !== false) {
     }
 
     activeSessions.set(user, sessionId);
+    console.log(`[${timestamp}] ✅ User "${user}" logged in from IP ${ip} — session ${sessionId}`);
     next();
+  });
+
+  app.get("/sessions", (req, res) => {
+    const sessionList = Array.from(activeSessions.entries()).map(([user, sessionId]) => {
+      return `<li><strong>${user}</strong>: ${sessionId}</li>`;
+    }).join("");
+
+    res.send(`
+      <html>
+        <body style="font-family:sans-serif;padding:20px;">
+          <h2>🧠 Active Sessions</h2>
+          <ul>${sessionList || "<li>No active sessions</li>"}</ul>
+        </body>
+      </html>
+    `);
   });
 }
 
@@ -86,7 +104,7 @@ const bannedIPs = [
 app.use((req, res, next) => {
   const ip = req.headers["x-forwarded-for"] || req.socket.remoteAddress;
   if (bannedIPs.includes(ip)) {
-    console.log(`🚫 Blocked IP: ${ip}`);
+    console.log(`🚫 Blocked IP: ${ip} tried to access ${req.originalUrl}`);
     return res.status(403).send("Access denied.");
   }
   next();
@@ -144,10 +162,11 @@ app.get("/e/*", async (req, res, next) => {
 // 🚫 Blocklist Check
 app.use((req, res, next) => {
   const target = req.query.url || req.body?.url || req.originalUrl;
+  const ip = req.headers["x-forwarded-for"] || req.socket.remoteAddress;
   if (target) {
     const normalizedTarget = target.toLowerCase();
     if (blockedSites.some(site => normalizedTarget.includes(site.replace(/\/$/, '').toLowerCase()))) {
-      console.log(`🚫 Blocked attempt: ${normalizedTarget}`);
+      console.log(`🚫 Blocked attempt from IP ${ip}: ${normalizedTarget}`);
       return res.status(403).send("🚫 This site is blocked.");
     }
   }
@@ -189,13 +208,14 @@ server.on("request", (req, res) => {
   const hostHeader = headers.host?.toLowerCase() || "";
   const refererHeader = headers.referer?.toLowerCase() || "";
   const fullTarget = `${req.url} ${hostHeader} ${refererHeader}`;
+  const ip = req.headers["x-forwarded-for"] || req.socket.remoteAddress;
 
   if (
     blockedSites.some(site =>
       fullTarget.includes(site.replace(/\/$/, '').toLowerCase())
     )
   ) {
-    console.log(`🚫 Blocked attempt: ${fullTarget}`);
+    console.log(`🚫 Blocked attempt from IP ${ip}: ${fullTarget}`);
     res.writeHead(403, { "Content-Type": "text/plain" });
     return res.end("🚫 This site is blocked.");
   }
@@ -216,7 +236,4 @@ server.on("upgrade", (req, socket, head) => {
 });
 
 server.on("listening", () => {
-  console.log(chalk.green(`🌍 Server is running on http://localhost:${PORT}`));
-});
-
-server.listen({ port: PORT });
+  console.log(chalk.green
