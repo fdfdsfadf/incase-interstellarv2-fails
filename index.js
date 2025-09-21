@@ -12,7 +12,7 @@ import fetch from "node-fetch";
 import crypto from "node:crypto";
 import config from "./config.js";
 
-const __dirname = path.dirname(new URL(import.meta.url).pathname);
+const __dirname = path.dirname(new URL(import.meta.url).pathname.replace(/^\/([A-Za-z]):/, '$1:'));
 
 console.log(chalk.yellow("🚀 Starting server..."));
 
