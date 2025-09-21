@@ -16,7 +16,11 @@ const __dirname = path.dirname(new URL(import.meta.url).pathname);
 
 console.log(chalk.yellow("🚀 Starting server..."));
 
-let blockedSites = JSON.parse(fs.readFileSync(path.join(__dirname, 'blocklist.json')));
+import path from 'path'
+import fs from 'fs'
+
+const blocklistPath = path.join(process.cwd(), 'blocklist.json')
+const blocklist = JSON.parse(fs.readFileSync(blocklistPath, 'utf-8'))
 
 fs.watchFile(path.join(__dirname, 'blocklist.json'), () => {
   console.log("🔄 Blocklist updated");
