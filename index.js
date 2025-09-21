@@ -19,10 +19,13 @@ console.log(chalk.yellow("🚀 Starting server..."));
 const blocklistPath = path.join(process.cwd(), 'blocklist.json')
 const blocklist = JSON.parse(fs.readFileSync(blocklistPath, 'utf-8'))
 
-fs.watchFile(path.join(__dirname, 'blocklist.json'), () => {
+fs.watchFile(blocklistPath, () => {
   console.log("🔄 Blocklist updated");
-  blockedSites = JSON.parse(fs.readFileSync(path.join(__dirname, 'blocklist.json')));
+  blockedSites = JSON.parse(fs.readFileSync(blocklistPath, 'utf-8'));
 });
+
+let blockedSites = JSON.parse(fs.readFileSync(blocklistPath, 'utf-8'));
+
 
 const server = http.createServer();
 const app = express();
