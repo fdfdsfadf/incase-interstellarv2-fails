@@ -16,9 +16,6 @@ const __dirname = path.dirname(new URL(import.meta.url).pathname);
 
 console.log(chalk.yellow("🚀 Starting server..."));
 
-import path from 'path'
-import fs from 'fs'
-
 const blocklistPath = path.join(process.cwd(), 'blocklist.json')
 const blocklist = JSON.parse(fs.readFileSync(blocklistPath, 'utf-8'))
 
